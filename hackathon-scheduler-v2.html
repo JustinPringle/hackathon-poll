@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hackathon Kick-off — Availability Poll</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1a2e;
+    --muted: #6b7280;
+    --accent: #e8572a;
+    --sand: #f5f0e8;
+    --white: #ffffff;
+    --border: #ddd8ce;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sand);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 1.5rem 0.75rem 3rem;
+  }
+
+  .container { max-width: 700px; margin: 0 auto; }
+
+  header {
+    margin-bottom: 2.5rem;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1.5rem;
+  }
+
+  .tag {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem;
+    line-height: 1.15;
+    margin-bottom: 0.6rem;
+  }
+
+  .subtitle { font-size: 0.95rem; color: var(--muted); line-height: 1.6; }
+
+  .name-section {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .name-section label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .name-section input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--sand);
+    transition: border-color 0.2s;
+  }
+
+  .name-section input:focus { outline: none; border-color: var(--accent); }
+
+  .calendar-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1.5px solid var(--border);
+    background: var(--ink);
+    color: var(--white);
+  }
+
+  .cal-header h2 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
+
+  .nav-btn {
+    background: none;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    color: var(--white);
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .nav-btn:hover { background: rgba(255,255,255,0.15); }
+
+  .day-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-label {
+    text-align: center;
+    padding: 0.6rem 0;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .day-label.weekend { color: var(--border); }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    margin: 1px;
+    position: relative;
+    transition: all 0.15s;
+    user-select: none;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  @media (max-width: 480px) {
+    .day-cell { font-size: 0.7rem; border-radius: 4px; }
+    .day-label { font-size: 0.6rem; padding: 0.4rem 0; }
+    .vote-count { font-size: 0.45rem; }
+    .cal-header h2 { font-size: 0.95rem; }
+    .nav-btn { width: 26px; height: 26px; font-size: 0.85rem; }
+    .time-grid { grid-template-columns: repeat(2, 1fr); }
+    h1 { font-size: 1.6rem; }
+  }
+
+  .day-cell:not(.empty):not(.past):not(.weekend):hover {
+    background: #fef3ee;
+    border-color: var(--accent);
+  }
+
+  .day-cell.empty, .day-cell.past, .day-cell.weekend { cursor: default; color: #ccc; }
+
+  .day-cell.selected {
+    background: var(--accent) !important;
+    color: var(--white) !important;
+    border-color: var(--accent) !important;
+    font-weight: 500;
+  }
+
+  .day-cell.voted { background: #e8f4e8; border-color: #4caf50; }
+
+  .vote-count {
+    position: absolute;
+    bottom: 2px; right: 4px;
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: #4caf50;
+  }
+
+  .day-cell.selected .vote-count { color: rgba(255,255,255,0.8); }
+
+  .time-section {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+
+  .time-chip {
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+    background: var(--sand);
+    position: relative;
+  }
+
+  .time-chip:hover { border-color: var(--accent); background: #fef3ee; }
+
+  .time-chip.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  .time-chip.voted { background: #e8f4e8; border-color: #4caf50; }
+  .time-chip.selected { background: var(--accent); border-color: var(--accent); color: var(--white); }
+
+  .chip-votes { font-size: 0.65rem; display: block; margin-top: 2px; opacity: 0.7; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--ink);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 1.5rem;
+  }
+
+  .submit-btn:hover { background: var(--accent); }
+  .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .results-section {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .results-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+
+  .result-row:last-child { border-bottom: none; }
+
+  .result-bar-wrap {
+    flex: 1;
+    margin: 0 1rem;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .result-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .result-names { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+
+  .best-slot {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--white);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+  }
+
+  .respondents { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+
+  .respondent-pill {
+    background: var(--sand);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 1rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: var(--white);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+    z-index: 999;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="tag">UKZN Hackathon Initiative</div>
+    <h1>Kick-off Meeting<br>Availability Poll</h1>
+    <p class="subtitle">Steering Committee — select dates and times that work for you. Results update live for all respondents.</p>
+  </header>
+
+  <div class="name-section">
+    <label>Your name</label>
+    <input type="text" id="nameInput" placeholder="e.g. Justin Pringle" />
+  </div>
+
+  <div class="calendar-card">
+    <div class="cal-header">
+      <button class="nav-btn" id="prevMonth">&#8249;</button>
+      <h2 id="monthLabel"></h2>
+      <button class="nav-btn" id="nextMonth">&#8250;</button>
+    </div>
+    <div class="day-labels">
+      <div class="day-label weekend">Su</div>
+      <div class="day-label">Mo</div>
+      <div class="day-label">Tu</div>
+      <div class="day-label">We</div>
+      <div class="day-label">Th</div>
+      <div class="day-label">Fr</div>
+      <div class="day-label weekend">Sa</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <div class="time-section">
+    <div class="section-label">Preferred time slots</div>
+    <div class="time-grid" id="timeGrid"></div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn">Submit Availability</button>
+
+  <div class="results-section">
+    <div class="results-title">Current Responses</div>
+    <div id="respondentList" class="respondents"></div>
+    <div id="resultsBody"><div class="loading">Loading responses…</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── CONFIG — paste your Apps Script Web App URL here ──────────────────────
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyaVurBzs9Ru0ouSR0w3rgVbqdh4dBsnIZ9jsh1K1GbOgZvuGJE67BaAR8nhSzVsYjp/exec';
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const TIME_SLOTS = ['08:00–09:00','09:00–10:00','10:00–11:00',
+                      '11:00–12:00','12:00–13:00','13:00–14:00',
+                      '14:00–15:00'];
+
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+  let viewYear, viewMonth;
+  const today = new Date(); today.setHours(0,0,0,0);
+  viewYear = today.getFullYear();
+  viewMonth = today.getMonth();
+
+  let selectedDates = new Set();
+  let selectedTimes = new Set();
+  let allResponses = [];
+
+  // ── Fetch responses from Sheet ────────────────────────────────────────────
+  function jsonp(url) {
+    return new Promise((resolve, reject) => {
+      const cbName = 'cb_' + Math.random().toString(36).slice(2);
+      const script = document.createElement('script');
+      window[cbName] = (data) => {
+        delete window[cbName];
+        document.body.removeChild(script);
+        resolve(data);
+      };
+      script.onerror = () => { delete window[cbName]; reject(new Error('JSONP failed')); };
+      script.src = `${url}&callback=${cbName}&cachebust=${Date.now()}`;
+      document.body.appendChild(script);
+    });
+  }
+
+  async function fetchResponses() {
+    try {
+      const data = await jsonp(API_URL + '?');
+      allResponses = data.responses || [];
+    } catch (e) {
+      console.error('Fetch error:', e);
+      allResponses = [];
+    }
+    renderAll();
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const name = document.getElementById('nameInput').value.trim();
+    if (!name) { showToast('Please enter your name.'); return; }
+    if (selectedDates.size === 0 && selectedTimes.size === 0) {
+      showToast('Please select at least one date or time slot.'); return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      const payload = JSON.stringify({
+        name,
+        dates: [...selectedDates].sort(),
+        times: [...selectedTimes]
+      });
+      await jsonp(`${API_URL}?action=post&payload=${encodeURIComponent(payload)}&`);
+      showToast(`Thanks ${name.split(' ')[0]}! Availability saved.`);
+      await fetchResponses();
+    } catch (e) {
+      showToast('Error saving — please try again.');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Submit Availability';
+  });
+
+  // ── Vote counts ───────────────────────────────────────────────────────────
+  function getVoteCounts() {
+    const dateCounts = {}, timeCounts = {}, dateVoters = {}, timeVoters = {};
+    allResponses.forEach(r => {
+      (r.dates || []).forEach(d => {
+        dateCounts[d] = (dateCounts[d] || 0) + 1;
+        (dateVoters[d] = dateVoters[d] || []).push(r.name);
+      });
+      (r.times || []).forEach(t => {
+        timeCounts[t] = (timeCounts[t] || 0) + 1;
+        (timeVoters[t] = timeVoters[t] || []).push(r.name);
+      });
+    });
+    return { dateCounts, timeCounts, dateVoters, timeVoters };
+  }
+
+  // ── Calendar ──────────────────────────────────────────────────────────────
+  function renderCalendar() {
+    document.getElementById('monthLabel').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+    const { dateCounts } = getVoteCounts();
+    const first = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+    for (let i = 0; i < first; i++) {
+      const b = document.createElement('div');
+      b.className = 'day-cell empty';
+      grid.appendChild(b);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(viewYear, viewMonth, d);
+      const iso = date.toISOString().slice(0,10);
+      const dow = date.getDay();
+      const isPast = date < today;
+      const isWeekend = dow === 0 || dow === 6;
+      const cell = document.createElement('div');
+      cell.className = 'day-cell';
+      if (isPast) cell.classList.add('past');
+      if (isWeekend) cell.classList.add('weekend');
+      if (selectedDates.has(iso)) cell.classList.add('selected');
+      if (dateCounts[iso]) cell.classList.add('voted');
+      cell.textContent = d;
+      if (dateCounts[iso]) {
+        const vc = document.createElement('span');
+        vc.className = 'vote-count';
+        vc.textContent = dateCounts[iso];
+        cell.appendChild(vc);
+      }
+      if (!isPast && !isWeekend) {
+        cell.addEventListener('click', () => {
+          selectedDates.has(iso) ? selectedDates.delete(iso) : selectedDates.add(iso);
+          renderCalendar();
+        });
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    if (--viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderCalendar();
+  });
+
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    if (++viewMonth > 11) { viewMonth = 0; viewYear++; }
+    renderCalendar();
+  });
+
+  // ── Time grid ─────────────────────────────────────────────────────────────
+  function renderTimeGrid() {
+    const grid = document.getElementById('timeGrid');
+    grid.innerHTML = '';
+    const { timeCounts } = getVoteCounts();
+    TIME_SLOTS.forEach(t => {
+      const chip = document.createElement('div');
+      chip.className = 'time-chip';
+      if (selectedTimes.has(t)) chip.classList.add('selected');
+      if (timeCounts[t]) chip.classList.add('voted');
+      chip.innerHTML = `${t}<span class="chip-votes">${timeCounts[t] ? timeCounts[t] + ' vote' + (timeCounts[t]>1?'s':'') : ''}</span>`;
+      chip.addEventListener('click', () => {
+        selectedTimes.has(t) ? selectedTimes.delete(t) : selectedTimes.add(t);
+        renderTimeGrid();
+      });
+      grid.appendChild(chip);
+    });
+  }
+
+  // ── Results ───────────────────────────────────────────────────────────────
+  function renderResults() {
+    const { dateCounts, timeCounts, dateVoters, timeVoters } = getVoteCounts();
+    const total = allResponses.length;
+    const maxVotes = Math.max(1, ...Object.values({...dateCounts,...timeCounts}));
+
+    document.getElementById('respondentList').innerHTML = total === 0
+      ? '<span style="font-size:0.85rem;color:var(--muted)">No responses yet.</span>'
+      : allResponses.map(r => `<div class="respondent-pill">${r.name}</div>`).join('');
+
+    const body = document.getElementById('resultsBody');
+    if (Object.keys(dateCounts).length === 0 && Object.keys(timeCounts).length === 0) {
+      body.innerHTML = '<p style="font-size:0.85rem;color:var(--muted)">Results will appear here once people respond.</p>';
+      return;
+    }
+
+    const maxD = Math.max(0, ...Object.values(dateCounts));
+    const maxT = Math.max(0, ...Object.values(timeCounts));
+    let html = '';
+
+    if (Object.keys(dateCounts).length) {
+      html += '<div style="font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Dates</div>';
+      Object.entries(dateCounts).sort((a,b)=>b[1]-a[1]).forEach(([iso, count]) => {
+        const label = new Date(iso+'T00:00:00').toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short'});
+        const best = count === maxD && count > 0;
+        html += `<div class="result-row">
+          <div style="min-width:110px;font-size:0.85rem">${label}${best?'<span class="best-slot">Best</span>':''}</div>
+          <div class="result-bar-wrap"><div class="result-bar" style="width:${count/maxVotes*100}%"></div></div>
+          <div style="min-width:30px;text-align:right;font-size:0.85rem;font-weight:500">${count}/${total}</div>
+        </div>
+        <div class="result-names">${(dateVoters[iso]||[]).join(', ')}</div>`;
+      });
+    }
+
+    if (Object.keys(timeCounts).length) {
+      html += '<div style="font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin:1rem 0 0.5rem;">Time Slots</div>';
+      Object.entries(timeCounts).sort((a,b)=>b[1]-a[1]).forEach(([slot, count]) => {
+        const best = count === maxT && count > 0;
+        html += `<div class="result-row">
+          <div style="min-width:110px;font-size:0.85rem">${slot}${best?'<span class="best-slot">Best</span>':''}</div>
+          <div class="result-bar-wrap"><div class="result-bar" style="width:${count/maxVotes*100}%"></div></div>
+          <div style="min-width:30px;text-align:right;font-size:0.85rem;font-weight:500">${count}/${total}</div>
+        </div>
+        <div class="result-names">${(timeVoters[slot]||[]).join(', ')}</div>`;
+      });
+    }
+
+    body.innerHTML = html;
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function renderAll() { renderCalendar(); renderTimeGrid(); renderResults(); }
+
+  // Init
+  fetchResponses();
+</script>
+</body>
+</html>
