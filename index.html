@@ -503,7 +503,7 @@
 
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
-      const iso = date.toISOString().slice(0,10);
+      const iso = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dow = date.getDay();
       const isPast = date < today;
       const isWeekend = dow === 0 || dow === 6;
@@ -582,7 +582,7 @@
     if (Object.keys(dateCounts).length) {
       html += '<div style="font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Dates</div>';
       Object.entries(dateCounts).sort((a,b)=>b[1]-a[1]).forEach(([iso, count]) => {
-        const label = new Date(iso+'T00:00:00').toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short'});
+        const label = new Date(iso+'T12:00:00').toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short'});
         const best = count === maxD && count > 0;
         html += `<div class="result-row">
           <div style="min-width:110px;font-size:0.85rem">${label}${best?'<span class="best-slot">Best</span>':''}</div>
